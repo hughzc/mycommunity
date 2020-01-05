@@ -9,6 +9,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Controller
 public class AuthorizeController {
     //Autowired与Component，调用GithubProdiver
@@ -28,7 +30,8 @@ public class AuthorizeController {
     //使用name接收code，为String类型
     //使用name接收state，为String类型
     public String callback(@RequestParam(name = "code") String code,
-                           @RequestParam(name = "state") String state){
+                           @RequestParam(name = "state") String state,
+                            HttpServletRequest request){
         AccessTokenDTO accessTokenDTO = new AccessTokenDTO();
         accessTokenDTO.setClient_id(clientId);
             accessTokenDTO.setClient_secret(clientSecret);
@@ -37,8 +40,14 @@ public class AuthorizeController {
         accessTokenDTO.setRedirect_uri(redirectUri);
         String accessToken = githubProvider.getAccessToken(accessTokenDTO);
         GithubUser user = githubProvider.getUser(accessToken);
-        System.out.println(user.getName());
-        //登录成功后返回index页面
-        return "index";
+        if(user != null){
+            //登录成功，写cookie和session
+            //将user对象放入session，框架集成，前端有了银行卡
+            request.getSession().setAttribute("user",user);
+            return "redirect:/";
+        }else {
+            //登录失败，重新登陆
+            return "redirect:/";
+        }
     }
 }
